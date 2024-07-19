@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const reviewSchema = new Schema({
@@ -17,24 +17,23 @@ const priceSchema = new Schema({
 });
 
 const productSchema = new Schema({
-  id: String,
   name: String,
   description: String,
   isInStock: Boolean,
   gender: String,
   category: String,
-  availableSizes: [Number],
+  availableSizes: String,
   rating: Number,
   reviews: [reviewSchema],
   totalReviewCount: Number,
   productionDate: Date,
-  price: {
-    current: priceSchema,
-  },
+
+  priceText: String,
+  priceValue: Number,
   brandName: String,
   productCode: Number,
   imageUrl: String,
   additionalImageUrls: [String],
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.model("Product", productSchema);
