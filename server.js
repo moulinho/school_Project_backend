@@ -1,13 +1,13 @@
 const express = require("express");
 // const mongoose = require("mongoose");
-const mysql = require("mysql2");
 
 const cors = require("cors");
-const dotenv = require("dotenv");
 // const routes = express.Router();
 const bodyParser = require("body-parser");
-
-dotenv.config();
+const multer = require("multer");
+const path = require("node:path");
+// dotenv.config();
+const db = require("./database");
 
 const app = express();
 const router = express.Router();
@@ -23,45 +23,68 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-// app.use(bodyParser.json());
+app.use(bodyParser.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: 3306,
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    console.log("file", file);
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error("Error connecting to MySQL:", err);
-    return;
-  }
-  console.log("Connected to MySQL");
-});
+const upload = multer({ storage: storage });
 
 // Routes
-app.use(
-  "/api/products",
-  router.post("/", (req, res) => {
-    const newProduct = req.body;
-    const sql = "INSERT INTO 	Product SET ?";
-    db.query(sql, newProduct, (err, result) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      res.status(201).json(result);
-    });
-  })
-);
+// app.use("/api/products", upload.single('image'), require("./routes/productRoutes"));
 
+app.post("/api/products", upload.single("image"), (req, res) => {
+  const { title, description, status, quantity, prix, image } = req.body;
+  const imageUrl = image ? `/uploads/${image.filename}` : null;
+
+  // Check for undefined or null values
+  // if (!title || !description || status === undefined || !quantity || !prix || !imageUrl) {
+  //   return res.status(400).json({ message: 'All fields are required' });
+  // }
+
+  // Ensure quantity and prix are numbers
+  const quantityNumber = parseInt(quantity, 10);
+  const prixNumber = parseFloat(prix);
+  // if (isNaN(quantityNumber) || isNaN(prixNumber)) {
+  //   return res.status(400).json({ message: 'Quantity and Prix must be numbers' });
+  // }
+
+  const query =
+    "INSERT INTO product (title, description, status, quantity, prix, imageUrl) VALUES (?, ?, ?, ?, ?, ?)";
+  db.execute(
+    query,
+    [title, description, status, quantityNumber, prixNumber, imageUrl],
+    (err, results) => {
+      if (err) {
+        console.error("SQL Error:", err);
+        return res.status(500).json({ message: "Database error", error: err });
+      }
+      res.status(201).json({
+        message: "Product created",
+        product: {
+          id: results.insertId,
+          title,
+          description,
+          status,
+          quantity: quantityNumber,
+          prix: prixNumber,
+          imageUrl,
+        },
+      });
+    }
+  );
+});
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-// module.exports = db;

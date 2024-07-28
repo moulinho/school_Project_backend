@@ -52,7 +52,7 @@ router.get("/", (req, res) => {
 // Add a new product
 router.post("/", (req, res) => {
   const newProduct = req.body;
-  const sql = "INSERT INTO products SET ?";
+  const sql = "INSERT INTO product SET ?";
   db.query(sql, newProduct, (err, result) => {
     if (err) {
       res.status(500).json({ error: err.message });
