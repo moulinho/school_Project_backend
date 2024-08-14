@@ -10,7 +10,6 @@ const path = require("path");
 const db = require("./database");
 
 const app = express();
-const router = express.Router();
 
 const PORT = process.env.PORT || 5000;
 
@@ -46,6 +45,7 @@ app.use(
 
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/auths", require("./routes/authRoutes"));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
