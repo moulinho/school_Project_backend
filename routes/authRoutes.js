@@ -8,9 +8,12 @@ const router = express.Router();
 
 // Register a new user
 router.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  // console.log("eq.body====>", req.body);
 
-  if (!name || !email || !password) {
+  const { firstName, lastName, email, contact, address, city, password } =
+    req.body;
+
+  if (!firstName || !address || !contact || !email || !password) {
     return res
       .status(400)
       .json({ message: "Please provide all required fields" });
@@ -18,7 +21,7 @@ router.post("/register", async (req, res) => {
 
   try {
     // Check if user already exists
-    const existingUser = db.query("SELECT * FROM users WHERE email = ?", [
+    const existingUser = db.query("SELECT * FROM Customers WHERE email = ?", [
       email,
     ]);
     if (existingUser.length > 0) {
@@ -30,16 +33,31 @@ router.post("/register", async (req, res) => {
 
     // Insert new user into the database
     const result = db.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, hashedPassword]
+      "INSERT INTO Customers (first_name, last_name, email, phone, address, city, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [firstName, lastName, email, contact, address, city, hashedPassword]
     );
 
     // Generate JWT token
-    const token = jwt.sign({ id: result.insertId }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
+    const token = jwt.sign(
+      { id: result.insertId },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
 
-    res.status(201).json({ token, user: { id: result.insertId, name, email } });
+    res.status(201).json({
+      token,
+      user: {
+        id: result.insertId,
+        firstName,
+        lastName,
+        email,
+        contact,
+        address,
+        city,
+      },
+    });
   } catch (err) {
     console.error("SQL Error:", err);
     res.status(500).json({ message: "Database error", error: err });
