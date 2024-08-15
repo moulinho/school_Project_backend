@@ -8,9 +8,9 @@ const router = express.Router();
 
 // Register a new user
 router.post("/register", async (req, res) => {
-  // console.log("eq.body====>", req.body);
+  console.log("eq.body====>", req.body);
 
-  const { firstName, lastName, email, contact, address, city, password } =
+  const { id, firstName, lastName, email, contact, address, city, password } =
     req.body;
 
   if (!firstName || !address || !contact || !email || !password) {
@@ -21,43 +21,57 @@ router.post("/register", async (req, res) => {
 
   try {
     // Check if user already exists
-    const existingUser = db.query("SELECT * FROM Customers WHERE email = ?", [
-      email,
-    ]);
-    if (existingUser.length > 0) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    db.query(
+      "SELECT * FROM Customers WHERE email = ?",
+      [email],
+      (err, results) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          if (results.length > 0) {
+            return res.status(400).json({ message: "User already exists" });
+          }
+        }
+      }
+    );
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert new user into the database
-    const result = db.query(
-      "INSERT INTO Customers (first_name, last_name, email, phone, address, city, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [firstName, lastName, email, contact, address, city, hashedPassword]
-    );
+    db.query(
+      "INSERT INTO Customers (id, first_name, last_name, email, contact, address, city, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, firstName, lastName, email, contact, address, city, hashedPassword],
+      (err, results) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          console.log("results", results);
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: result.insertId },
-      process.env.ACCESS_TOKEN_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRES_IN,
+          // Generate JWT token
+          const token = jwt.sign(
+            { id: results.id },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+              expiresIn: process.env.JWT_EXPIRES_IN,
+            }
+          );
+
+          res.status(201).json({
+            token,
+            user: {
+              firstName,
+              lastName,
+              email,
+              contact,
+              address,
+              city,
+            },
+          });
+          // res.json(results);
+        }
       }
     );
-
-    res.status(201).json({
-      token,
-      user: {
-        id: result.insertId,
-        firstName,
-        lastName,
-        email,
-        contact,
-        address,
-        city,
-      },
-    });
   } catch (err) {
     console.error("SQL Error:", err);
     res.status(500).json({ message: "Database error", error: err });
