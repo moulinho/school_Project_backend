@@ -58,7 +58,7 @@ router.post("/register", async (req, res) => {
           );
 
           res.status(201).json({
-            token,
+            token: token,
             user: {
               firstName,
               lastName,
@@ -109,6 +109,7 @@ router.post("/login", async (req, res) => {
           expiresIn: process.env.JWT_EXPIRES_IN,
         }
       );
+
       const validPassword = await bcrypt.compare(password, results[0].password);
       if (!validPassword) {
         return res.status(400).json({ message: "Invalid credentials" });
@@ -132,20 +133,38 @@ router.post("/login", async (req, res) => {
 
 // Protected route example
 router.get("/profile", async (req, res) => {
+  // console.log("req=>", req);
+
   const token = req.header("Authorization").replace("Bearer ", "");
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const [user] = await db.execute(
-      "SELECT id, name, email FROM users WHERE id = ?",
-      [decoded.id]
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    // console.log("decoded=>", decoded);
+
+    db.query(
+      "SELECT * FROM Customers WHERE id = ?",
+      [decoded.id],
+      async (err, results) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({
+          results: results.filter((item) => {
+            delete item.id;
+            delete item.password;
+            return item;
+          }),
+        });
+      }
     );
 
-    if (user.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json(user[0]);
+    // res.status(200).json(user[0]);
   } catch (err) {
     res.status(401).json({ message: "Invalid token" });
   }
