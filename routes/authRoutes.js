@@ -170,4 +170,103 @@ router.get("/profile", async (req, res) => {
   }
 });
 
+// Update user
+router.patch("/profile_update", async (req, res) => {
+  // console.log("eq.body====>", req);
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  console.log("token", req.header("Authorization"));
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Access Denied. No token provided." });
+  }
+  const { firstName, lastName, email, contact, address, city, password } =
+    req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
+
+    let query = "UPDATE Customers SET";
+    let fields = [];
+    let values = [];
+
+    if (firstName) {
+      fields.push(" first_name = ?");
+      values.push(firstName);
+    }
+
+    if (lastName) {
+      fields.push(" last_name = ?");
+      values.push(lastName);
+    }
+
+    if (email) {
+      fields.push(" email = ?");
+      values.push(email);
+    }
+
+    if (contact) {
+      fields.push(" contact = ?");
+      values.push(contact);
+    }
+    if (address) {
+      fields.push(" address = ?");
+      values.push(address);
+    }
+
+    if (city) {
+      fields.push(" city = ?");
+      values.push(city);
+    }
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      fields.push(" password = ?");
+      values.push(hashedPassword);
+    }
+
+    query += fields.join(", ");
+    query += " WHERE id = ?";
+    values.push(userId);
+
+    // Update new user into the database
+    db.query(query, values, (err, results) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        console.log("results", results);
+        res.status(200).json({ message: "Profile updated successfully." });
+
+        // Generate JWT token
+        // const token = jwt.sign(
+        //   { id: results.id },
+        //   process.env.ACCESS_TOKEN_SECRET,
+        //   {
+        //     expiresIn: process.env.JWT_EXPIRES_IN,
+        //   }
+        // );
+
+        // res.status(201).json({
+        //   token: token,
+        //   user: {
+        //     firstName,
+        //     lastName,
+        //     email,
+        //     contact,
+        //     address,
+        //     city,
+        //   },
+        // });
+        // res.json(results);
+      }
+    });
+  } catch (err) {
+    console.error("SQL Error:", err);
+    res.status(500).json({ message: "Database error", error: err });
+  }
+});
+
 module.exports = router;
