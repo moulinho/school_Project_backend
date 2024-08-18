@@ -46,6 +46,19 @@ router.get("/categories/:id", (req, res) => {
   });
 });
 
+// Get all Supplier
+router.get("/suppliers", (req, res) => {
+  const sql = "SELECT * FROM Suppliers";
+  db.query(sql, (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// GET product by ID
 router.get("/:id", (req, res) => {
   const sql = "SELECT * FROM Products WHERE id = ?";
   db.query(sql, [req.params.id], (err, results) => {
@@ -79,26 +92,35 @@ router.get("/products/by-category/:categoryName", (req, res) => {
 
 // Add a new product
 router.post("/", (req, res) => {
-  const { title, description, status, quantity, prix } = req.body;
+  const {
+    id,
+    name,
+    description,
+    price,
+    stock_quantity,
+    unit,
+    supplier_id,
+    category_id,
+  } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-  console.log({ title, description, status, quantity, prix, imageUrl });
 
   // Check for undefined or null values
   if (
-    !title ||
+    !name ||
     !description ||
-    status === undefined ||
-    !quantity ||
-    !prix ||
+    !stock_quantity ||
+    !price ||
+    !unit ||
+    !supplier_id ||
+    !category_id ||
     !imageUrl
   ) {
     return res.status(400).json({ message: "Tous les champs son require" });
   }
 
   // Quantity et Prix doivent être un entier
-  const quantityNumber = parseInt(quantity, 10);
-  const prixNumber = parseFloat(prix);
+  const quantityNumber = parseInt(stock_quantity, 10);
+  const prixNumber = parseFloat(price);
   if (isNaN(quantityNumber) || isNaN(prixNumber)) {
     return res
       .status(400)
@@ -106,15 +128,26 @@ router.post("/", (req, res) => {
   }
 
   const query =
-    "INSERT INTO Products (id, name, description, price, category_id, stock_quantity, unit, supplier_id, image) VALUES (?, ?, ?, ?, ?, ?,?)";
+    "INSERT INTO Products (id, name, description, price, category_id, stock_quantity, unit, supplier_id, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
   db.execute(
     query,
-    [title, description, status, quantityNumber, prixNumber, imageUrl],
+    [
+      id,
+      name,
+      description,
+      prixNumber,
+      category_id,
+      quantityNumber,
+      unit,
+      supplier_id,
+      imageUrl,
+    ],
     (err, results) => {
       if (err) {
         // console.error('SQL Error:', err);
         return res.status(500).json({ message: "Database error", error: err });
       }
+      console.table(results);
       res.status(201).json({
         message: "Product created",
         // product: { id: results.insertId, title, description, status, quantity: quantityNumber, prix: prixNumber, imageUrl }

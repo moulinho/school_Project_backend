@@ -172,14 +172,12 @@ router.get("/profile", async (req, res) => {
 
 // Update user
 router.patch("/profile_update", async (req, res) => {
-  // console.log("eq.body====>", req);
   const token = req.header("Authorization")?.replace("Bearer ", "");
-  console.log("token", req.header("Authorization"));
 
   if (!token) {
     return res
       .status(401)
-      .json({ message: "Access Denied. No token provided." });
+      .json({ message: "Acces refusé identifiant invlide." });
   }
   const { firstName, lastName, email, contact, address, city, password } =
     req.body;
@@ -238,29 +236,7 @@ router.patch("/profile_update", async (req, res) => {
         res.status(500).send(err);
       } else {
         console.log("results", results);
-        res.status(200).json({ message: "Profile updated successfully." });
-
-        // Generate JWT token
-        // const token = jwt.sign(
-        //   { id: results.id },
-        //   process.env.ACCESS_TOKEN_SECRET,
-        //   {
-        //     expiresIn: process.env.JWT_EXPIRES_IN,
-        //   }
-        // );
-
-        // res.status(201).json({
-        //   token: token,
-        //   user: {
-        //     firstName,
-        //     lastName,
-        //     email,
-        //     contact,
-        //     address,
-        //     city,
-        //   },
-        // });
-        // res.json(results);
+        res.status(200).json({ message: "Profile updated." });
       }
     });
   } catch (err) {
