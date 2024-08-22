@@ -82,10 +82,12 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("email, password", email, password);
+
   if (!email || !password) {
     return res
       .status(400)
-      .json({ message: "email anoud mo de passe incorrect " });
+      .json({ message: "email ou mot de passe incorrect " });
   }
 
   try {
@@ -97,7 +99,7 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ error: err.message });
         return;
       }
-      // console.log("results", results);
+      // console.log("results", results  );
 
       // res.json(results);
 
@@ -111,6 +113,9 @@ router.post("/login", async (req, res) => {
       );
 
       const validPassword = await bcrypt.compare(password, results[0].password);
+      // console.log("password", password);
+      // console.log("validPassword", validPassword);
+
       if (!validPassword) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
