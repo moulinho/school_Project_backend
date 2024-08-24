@@ -184,8 +184,9 @@ router.patch("/profile_update", async (req, res) => {
       .status(401)
       .json({ message: "Acces refusé identifiant invlide." });
   }
-  const { firstName, lastName, email, contact, address, city, password } =
+  const { first_name, last_name, email, contact, address, city, oldPassword } =
     req.body;
+  // console.log(" req.body", req.body);
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -196,14 +197,14 @@ router.patch("/profile_update", async (req, res) => {
     let fields = [];
     let values = [];
 
-    if (firstName) {
+    if (first_name) {
       fields.push(" first_name = ?");
-      values.push(firstName);
+      values.push(first_name);
     }
 
-    if (lastName) {
+    if (last_name) {
       fields.push(" last_name = ?");
-      values.push(lastName);
+      values.push(last_name);
     }
 
     if (email) {
@@ -225,8 +226,8 @@ router.patch("/profile_update", async (req, res) => {
       values.push(city);
     }
 
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
+    if (oldPassword) {
+      const hashedPassword = await bcrypt.hash(oldPassword, 10);
       fields.push(" password = ?");
       values.push(hashedPassword);
     }
@@ -236,11 +237,12 @@ router.patch("/profile_update", async (req, res) => {
     values.push(userId);
 
     // Update new user into the database
+
     db.query(query, values, (err, results) => {
       if (err) {
         res.status(500).send(err);
       } else {
-        console.log("results", results);
+        // console.log("results", results);
         res.status(200).json({ message: "Profile updated." });
       }
     });
