@@ -1,4 +1,6 @@
 const express = require("express");
+const { v4: uuidv4 } = require("uuid");
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../database");
@@ -9,8 +11,9 @@ const router = express.Router();
 // Register a new user
 router.post("/register", async (req, res) => {
   // console.log("eq.body====>", req.body);
+  const id = uuidv4();
 
-  const { id, firstName, lastName, email, contact, address, city, password } =
+  const { firstName, lastName, email, contact, address, city, password } =
     req.body;
 
   if (!firstName || !address || !contact || !email || !password) {
@@ -123,7 +126,6 @@ router.post("/login", async (req, res) => {
       res.status(200).json({
         token: token,
         results: results.filter((item) => {
-        
           delete item.password;
           return item;
         }),

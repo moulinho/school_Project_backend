@@ -1,4 +1,6 @@
 const express = require("express");
+const { v4: uuidv4 } = require("uuid");
+
 const router = express.Router();
 const db = require("../database");
 
@@ -92,8 +94,9 @@ router.get("/products/by-category/:categoryName", (req, res) => {
 
 // Add a new product
 router.post("/", (req, res) => {
+  const id = uuidv4();
+
   const {
-    id,
     name,
     description,
     price,
@@ -124,11 +127,12 @@ router.post("/", (req, res) => {
   if (isNaN(quantityNumber) || isNaN(prixNumber)) {
     return res
       .status(400)
-      .json({ message: "Quantity et Prix doivent être un entier" });
+      .json({ message: "Quantity et Prix doivent être des entiers" });
   }
 
   const query =
     "INSERT INTO Products (id, name, description, price, category_id, stock_quantity, unit, supplier_id, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
   db.execute(
     query,
     [
@@ -145,9 +149,8 @@ router.post("/", (req, res) => {
     (err, results) => {
       if (err) {
         // console.error('SQL Error:', err);
-        return res.status(500).json({ message: "Database error", error: err });
+        return res.status(500).json({ message: "server error", error: err });
       }
-      console.table(results);
       res.status(201).json({
         message: "Product created",
         // product: { id: results.insertId, title, description, status, quantity: quantityNumber, prix: prixNumber, imageUrl }
