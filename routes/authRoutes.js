@@ -123,7 +123,7 @@ router.post("/login", async (req, res) => {
       res.status(200).json({
         token: token,
         results: results.filter((item) => {
-          delete item.id;
+        
           delete item.password;
           return item;
         }),

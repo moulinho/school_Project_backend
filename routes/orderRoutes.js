@@ -14,7 +14,9 @@ router.get('/', async (req, res) => {
 
 // Create a new order
 router.post('/', async (req, res) => {
-  const order = new Order(req.body);
+  // const sql = "SELECT * FROM Products";
+
+  const { } = req.body;
   try {
     const newOrder = await order.save();
     res.status(201).json(newOrder);
