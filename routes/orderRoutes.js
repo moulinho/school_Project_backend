@@ -1,9 +1,9 @@
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
-const Order = require("../models/Order");
 const db = require("../database");
 const id = uuidv4();
+const Order = require("../models/Order");
 // Get all orders
 router.get("/", async (req, res) => {
   try {
@@ -33,16 +33,10 @@ router.post("/", async (req, res) => {
       }
       res.status(201).json({
         message: "Oder created",
+        id: id,
       });
     }
   );
-
-  // try {
-  //   const newOrder = await order.save();
-  //   res.status(201).json(newOrder);
-  // } catch (err) {
-  //   res.status(400).json({ message: err.message });
-  // }
 });
 
 // Helper function to execute SQL queries
@@ -59,7 +53,7 @@ const query = (sql, params) => {
 
 router.post("/orderItems", async (req, res) => {
   const items = req.body;
-  console.log("items", items);
+  // console.log("items", items);
 
   // Validate request body
   if (items.length === 0) {
@@ -76,7 +70,7 @@ router.post("/orderItems", async (req, res) => {
 
     return [idOrderItem, id, item.id, item.quantity, item.price];
   });
-  console.log("values", values);
+  // console.log("values", values);
 
   try {
     // Attempt to execute the query
