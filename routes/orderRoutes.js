@@ -29,7 +29,11 @@ router.post("/", async (req, res) => {
     (err, results) => {
       if (err) {
         // console.error('SQL Error:', err);
-        return res.status(500).json({ message: "server error", error: err });
+        if (err.sqlMessage.includes("Duplicate")) {
+          return res
+            .status(500)
+            .json({ message: "La commande est déjà effectué" });
+        }
       }
       res.status(201).json({
         message: "Oder created",
