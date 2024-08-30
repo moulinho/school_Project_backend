@@ -1,36 +1,42 @@
 const express = require("express");
 const router = express.Router();
 // const db = require("../database");
+require("dotenv").config();
 
-const stripe = require("stripe")(
-  "sk_test_51MC7omBNMWYOuX4LTfOnn0mq5YoN0tOKzkV6JYyAhPpDqc4Iezc49n5E2aWI6BKZevuf8nF9XaoWchRircs9sPjl00zt7rxToq"
-);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-router.post("/paiment", async (req, res) => {
-  const YOUR_DOMAIN = "http://localhost:3000";
+router.post("/", async (req, res) => {
+  const { items } = req.body;
+
+  // console.log("req.body", items[0].amount);
   try {
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "T-shirt",
-            },
-            unit_amount: 2000,
-          },
-          quantity: 1,
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: items[0].amount,
+      currency: "xof",
+      // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+      // automatic_payment_methods: {
+      //   enabled: true,
+      // },
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'any',
         },
-      ],
-      mode: "payment",
-      success_url: `${YOUR_DOMAIN}/success`,
-      cancel_url: `${YOUR_DOMAIN}/cancel`,
+      },
     });
-    res.json({ id: session.id });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+      // [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
+      dpmCheckerLink: `https://dashboard.stripe.com/settings/payment_methods/review?transaction_id=${paymentIntent.id}`,
+    });
   } catch (error) {
-    console.log("error");
+    return res.status(400).send({
+      error: {
+        message: error.message,
+      },
+    });
   }
-  //   res.redirect(303, session.url);
+  // Create a PaymentIntent with the order amount and currency
 });
 
 module.exports = router;
