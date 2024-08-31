@@ -28,7 +28,7 @@ router.get("/categories", (req, res) => {
       return;
     }
     // console.log("results", results);
-
+   
     res.json(results);
   });
 });

@@ -14,7 +14,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-
 // Get all orders by User conect
 router.get("/:id", async (req, res) => {
   try {
@@ -25,9 +24,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
 // Create a new order
 router.post("/", async (req, res) => {
+  // console.log("req", req.body);
+
   const query =
     "INSERT INTO Orders (id, customer_id, status, total_price, shipping_address) VALUES (? ,? ,? ,? ,?)";
 
@@ -38,7 +38,7 @@ router.post("/", async (req, res) => {
   db.execute(
     query,
     [id, customer_id, status, total_price, shipping_address],
-    (err, results) => {
+    (err, results) => { 
       if (err) {
         // console.error('SQL Error:', err);
         if (err.sqlMessage.includes("Duplicate")) {

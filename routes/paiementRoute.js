@@ -1,25 +1,29 @@
 const express = require("express");
 const router = express.Router();
-// const db = require("../database");
+const { v4: uuidv4 } = require("uuid");
+
+const db = require("../database");
+const id = uuidv4();
+
 require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-router.post("/", async (req, res) => {
-  const { items } = req.body;
+router.post("/paiment-intent", async (req, res) => {
+  const { total } = req.body;
 
-  // console.log("req.body", items[0].amount);
+  // console.log("req.body", req.body);
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: items[0].amount,
+      amount: total,
       currency: "xof",
       // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-      // automatic_payment_methods: {
-      //   enabled: true,
-      // },
+      automatic_payment_methods: {
+        enabled: true,
+      },
       payment_method_options: {
         card: {
-          request_three_d_secure: 'any',
+          request_three_d_secure: "any",
         },
       },
     });
@@ -37,6 +41,29 @@ router.post("/", async (req, res) => {
     });
   }
   // Create a PaymentIntent with the order amount and currency
+});
+
+router.post("/paiment-register", async (req, res) => {
+  const query =
+    "INSERT INTO Payments (id, order_id, payment_method, amount, status) VALUES (? ,? ,? ,? ,?)";
+
+    // console.log("req.body",req.body);
+    
+  const { order_id, payment_method, amount, status } = req.body;
+  db.execute(
+    query,
+    [id, order_id, payment_method, amount, status],
+    (err, results) => {
+      if (err) {
+        console.error('SQL Error:', err);
+        return res.status(500).json({ message: "Il y'a une erreur" });
+      }
+      res.status(201).json({
+        message: "Payement success",
+        id: id,
+      });
+    }
+  );
 });
 
 module.exports = router;
