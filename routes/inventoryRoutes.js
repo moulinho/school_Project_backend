@@ -38,7 +38,7 @@ router.post("/decrease", async (req, res) => {
         `;
         await query(queryProduct, [item.quantity, item.id]);
       }
-
+ 
       res
         .status(200)
         .json({ message: "Stock quantities updated successfully" });

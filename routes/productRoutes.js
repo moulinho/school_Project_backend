@@ -28,7 +28,7 @@ router.get("/categories", (req, res) => {
       return;
     }
     // console.log("results", results);
-   
+
     res.json(results);
   });
 });
@@ -45,6 +45,26 @@ router.get("/categories/:id", (req, res) => {
     } else {
       res.json(results);
     }
+  });
+});
+
+router.get("/:name", (req, res) => {
+  const name = req.query.name; // Récupère le paramètre aliment depuis le front end
+
+  const query = `
+            SELECT *
+            FROM Products
+            WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))
+        `;
+
+  db.query(query, [req.params.name, name], (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    // console.log("results", results);
+
+    res.json(results);
   });
 });
 
