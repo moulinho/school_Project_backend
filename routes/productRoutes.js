@@ -4,15 +4,44 @@ const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
 const db = require("../database");
 
+// Helper function to execute SQL queries
+const query = (sql, params) => {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(results);
+    });
+  });
+};
+
 // Get all products
-router.get("/", (req, res) => {
-  const sql = "SELECT * FROM Products";
-  db.query(sql, (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(results);
+router.get("/", async (req, res) => {
+  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+  const pageSize = 12;
+
+  // Calculate the offset
+  const offset = (page - 1) * pageSize;
+
+  const sql = "SELECT * FROM Products LIMIT 12 OFFSET ?";
+
+  const products = await query(sql, [offset]); // Execute the query with LIMIT and OFFSET
+  // console.log("products", products);
+
+  // Optionally, get the total count of products for pagination metadata
+  const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+  // console.log("countQuery", countQuery);
+
+  const totalResult = await query(countQuery);
+  const totalItems = totalResult[0].total;
+
+  res.status(200).json({
+    page,
+    pageSize,
+    totalItems,
+    totalPages: Math.ceil(totalItems / pageSize),
+    products,
   });
 });
 
