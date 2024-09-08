@@ -25,7 +25,7 @@ router.get("/", async (req, res) => {
   const offset = (page - 1) * pageSize;
 
   const sql = "SELECT * FROM Products LIMIT 12 OFFSET ?";
-
+ 
   const products = await query(sql, [offset]); // Execute the query with LIMIT and OFFSET
   // console.log("products", products);
 

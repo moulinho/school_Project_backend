@@ -28,63 +28,35 @@ router.get("/", async (req, res) => {
 });
 
 // Get all orders by User conect
-router.get("/order/:customerId", async (req, res) => {
-  const customerId = req.params.customerId;
+router.get("/OrderHistory/:email", async (req, res) => {
+  const customer_email = req.params.email;
+
+  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+  const pageSize = 10;
+
+  const offset = (page - 1) * pageSize;
 
   try {
-    const query = `SELECT 
-        p.*,
-        o.id AS orderId,
-        o.status,
-        oi.product_id,
-        oi.title AS productTitle,
-        oi.price AS productPrice,
-        oi.amount AS quantity,
-        c.id AS customerId,
-        c.firstName AS customerFirstName,
-        c.lastName AS customerLastName,
-        c.email AS customerEmail
-      FROM 
-        Orders o
-      JOIN 
-        OrderItems oi ON o.id = oi.order_id
-      JOIN 
-        Products p ON oi.product_id = p.id
-      JOIN 
-        Customers c ON o.customer_id = c.id
-      WHERE 
-        c.id = ?
-      ORDER BY 
-        o.id ASC; `;
+    const sql =
+      "SELECT * FROM OrderHistory WHERE customer_email = ? LIMIT ? OFFSET ?";
 
-    // Execute the query
-    db.query(query, [customerId], (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Database error" });
-      }
+    const history = await query(sql, [customer_email, pageSize, offset]); // Execute the query with LIMIT and OFFSET
 
-      res.status(200).json(results);
+    // Optionally, get the total count of products for pagination metadata
+    const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+    const totalResult = await query(countQuery, [customer_email]);
+    const totalItems = totalResult[0].total;
+
+    res.status(200).json({
+      page,
+      pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / pageSize),
+      history,
     });
   } catch (err) {
     console.error("Error:", err);
     res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Get all orders by User conect
-router.get("/OrderItems/:id", async (req, res) => {
-  try {
-    const sql = "SELECT * FROM OrderItems WHERE customer_id = ?";
-    const countQuery = `SELECT COUNT(*) AS total FROM Orders`;
-    const totalResult = await query(countQuery);
-    const totalItems = totalResult[0].total;
-
-    const results = await query(sql, [req.params.id]);
-
-    res.status(200).json({ results, totalItems });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
 });
 
@@ -97,7 +69,7 @@ router.post("/", async (req, res) => {
 
   const { customer_id, status, total_price, shipping_address } = req.body;
 
-  // console.log("req.body", req.body);
+  console.log("Orders", req.body);
 
   db.execute(
     query,

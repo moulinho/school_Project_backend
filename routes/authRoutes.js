@@ -63,6 +63,7 @@ router.post("/register", async (req, res) => {
           res.status(201).json({
             token: token,
             user: {
+              id: id,
               firstName,
               lastName,
               email,
@@ -113,7 +114,7 @@ router.post("/login", async (req, res) => {
         {
           expiresIn: process.env.JWT_EXPIRES_IN,
         }
-      ); 
+      );
 
       const validPassword = await bcrypt.compare(password, results[0].password);
       // console.log("password", password);
@@ -125,7 +126,7 @@ router.post("/login", async (req, res) => {
 
       res.status(200).json({
         token: token,
-        results: results.filter((item) => {
+        user: results.filter((item) => {
           delete item.password;
           return item;
         }),
