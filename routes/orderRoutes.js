@@ -4,6 +4,19 @@ const router = express.Router();
 const db = require("../database");
 const id = uuidv4();
 const Order = require("../models/Order");
+
+// Helper function to execute SQL queries
+const query = (sql, params) => {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(results);
+    });
+  });
+};
+
 // Get all orders
 router.get("/", async (req, res) => {
   try {
@@ -15,10 +28,61 @@ router.get("/", async (req, res) => {
 });
 
 // Get all orders by User conect
-router.get("/:id", async (req, res) => {
+router.get("/order/:customerId", async (req, res) => {
+  const customerId = req.params.customerId;
+
   try {
-    const query = "";
-    res.json(orders);
+    const query = `SELECT 
+        p.*,
+        o.id AS orderId,
+        o.status,
+        oi.product_id,
+        oi.title AS productTitle,
+        oi.price AS productPrice,
+        oi.amount AS quantity,
+        c.id AS customerId,
+        c.firstName AS customerFirstName,
+        c.lastName AS customerLastName,
+        c.email AS customerEmail
+      FROM 
+        Orders o
+      JOIN 
+        OrderItems oi ON o.id = oi.order_id
+      JOIN 
+        Products p ON oi.product_id = p.id
+      JOIN 
+        Customers c ON o.customer_id = c.id
+      WHERE 
+        c.id = ?
+      ORDER BY 
+        o.id ASC; `;
+
+    // Execute the query
+    db.query(query, [customerId], (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      res.status(200).json(results);
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get all orders by User conect
+router.get("/OrderItems/:id", async (req, res) => {
+  try {
+    const sql = "SELECT * FROM OrderItems WHERE customer_id = ?";
+    const countQuery = `SELECT COUNT(*) AS total FROM Orders`;
+    const totalResult = await query(countQuery);
+    const totalItems = totalResult[0].total;
+
+    const results = await query(sql, [req.params.id]);
+
+    res.status(200).json({ results, totalItems });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -38,7 +102,7 @@ router.post("/", async (req, res) => {
   db.execute(
     query,
     [id, customer_id, status, total_price, shipping_address],
-    (err, results) => { 
+    (err, results) => {
       if (err) {
         // console.error('SQL Error:', err);
         if (err.sqlMessage.includes("Duplicate")) {
@@ -54,18 +118,6 @@ router.post("/", async (req, res) => {
     }
   );
 });
-
-// Helper function to execute SQL queries
-const query = (sql, params) => {
-  return new Promise((resolve, reject) => {
-    db.query(sql, params, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-      resolve(results);
-    });
-  });
-};
 
 router.post("/orderItems", async (req, res) => {
   const items = req.body;

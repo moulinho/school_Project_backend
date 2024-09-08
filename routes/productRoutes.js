@@ -45,7 +45,20 @@ router.get("/", async (req, res) => {
   });
 });
 
-// Get all products by id
+// Get all Supplier
+router.get("/suppliers", (req, res) => {
+  const query = "SELECT * FROM Suppliers";
+
+  db.query(query, (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    console.log("results", results);
+
+    res.json(results);
+  });
+});
 
 // Get products categories
 router.get("/categories", (req, res) => {
@@ -63,17 +76,29 @@ router.get("/categories", (req, res) => {
 });
 
 // Get products by category id
-router.get("/categories/:id", (req, res) => {
+router.get("/categories/:id", async (req, res) => {
   const categoryId = req.params.id;
 
-  const query = "SELECT * FROM Products WHERE category_id = ?";
+  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+  const pageSize = 12;
 
-  db.query(query, [categoryId], (err, results) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.json(results);
-    }
+  // Calculate the offset
+  const offset = (page - 1) * pageSize;
+
+  const sql = "SELECT * FROM Products WHERE category_id = ? LIMIT ? OFFSET ?";
+
+  const products = await query(sql, [categoryId, pageSize, offset]); // Execute the query with LIMIT and OFFSET
+
+  // Optionally, get the total count of products for pagination metadata
+  const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+  const totalResult = await query(countQuery, [categoryId]);
+  const totalItems = totalResult[0].total;
+  res.status(200).json({
+    page,
+    pageSize,
+    totalItems,
+    totalPages: Math.ceil(totalItems / pageSize),
+    products,
   });
 });
 
@@ -93,18 +118,6 @@ router.get("/:name", (req, res) => {
     }
     // console.log("results", results);
 
-    res.json(results);
-  });
-});
-
-// Get all Supplier
-router.get("/suppliers", (req, res) => {
-  const sql = "SELECT * FROM Suppliers";
-  db.query(sql, (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
     res.json(results);
   });
 });

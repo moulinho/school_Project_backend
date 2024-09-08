@@ -113,7 +113,7 @@ router.post("/login", async (req, res) => {
         {
           expiresIn: process.env.JWT_EXPIRES_IN,
         }
-      );
+      ); 
 
       const validPassword = await bcrypt.compare(password, results[0].password);
       // console.log("password", password);
