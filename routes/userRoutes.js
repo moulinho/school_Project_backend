@@ -12,7 +12,7 @@ const query = (sql, params) => {
       resolve(results);
     });
   });
-};
+};    
 
 // Get all users
 router.get("/", async (req, res) => {
