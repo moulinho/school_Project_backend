@@ -1,19 +1,40 @@
 const express = require("express");
 const router = express.Router();
-const User = require('../models/User');
+const db = require("../database");
+
+// Helper function to execute SQL queries
+const query = (sql, params) => {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(results);
+    });
+  });
+};
 
 // Get all users
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
+  const sql = "SELECT * FROM Customers";
+  const countQuery = `SELECT COUNT(*) AS total FROM Customers`;
+
   try {
-    const users = await User.find();
-    res.json(users);
+    const result = await query(sql);
+    const totalResult = await query(countQuery);
+    const totalItems = totalResult[0].total;
+
+    res.status(200).json({
+      total: totalItems,
+      user: result,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
 // Create a new user
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   const user = new User(req.body);
   try {
     const newUser = await user.save();

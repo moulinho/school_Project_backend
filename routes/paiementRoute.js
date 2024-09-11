@@ -29,11 +29,11 @@ router.post("/paiment-intent", async (req, res) => {
       },
     });
 
-    res.send({
-      clientSecret: paymentIntent.client_secret,
-      // [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
-      dpmCheckerLink: `https://dashboard.stripe.com/settings/payment_methods/review?transaction_id=${paymentIntent.id}`,
-    });
+    // res.send({
+    //   clientSecret: paymentIntent.client_secret,
+    //   // [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
+    //   dpmCheckerLink: `https://dashboard.stripe.com/settings/payment_methods/review?transaction_id=${paymentIntent.id}`,
+    // });
   } catch (error) {
     return res.status(400).send({
       error: {
