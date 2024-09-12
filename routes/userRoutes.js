@@ -12,21 +12,29 @@ const query = (sql, params) => {
       resolve(results);
     });
   });
-};    
+};
 
 // Get all users
 router.get("/", async (req, res) => {
-  const sql = "SELECT * FROM Customers";
+  // const sql = "SELECT * FROM Customers";
   const countQuery = `SELECT COUNT(*) AS total FROM Customers`;
 
   try {
-    const result = await query(sql);
+    // const result = await query(sql);
     const totalResult = await query(countQuery);
     const totalItems = totalResult[0].total;
 
+    // const processedCustomers = [];
+    // if (result < totalItems) {
+      // for (let index = 0; index < result.length; index++) {
+      //   let customer = result[index];
+      //   processedCustomers.push(customer);
+      // }
+    // }
+
     res.status(200).json({
       total: totalItems,
-      user: result,
+      // user: processedCustomers,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

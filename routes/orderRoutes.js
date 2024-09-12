@@ -17,11 +17,28 @@ const query = (sql, params) => {
   });
 };
 
-// Get all orders
+// Get all Order
 router.get("/", async (req, res) => {
+  const sql = "SELECT * FROM Orders";
+  const countQuery = `SELECT COUNT(*) AS total FROM Orders`;
+
   try {
-    const orders = await Order.find();
-    res.json(orders);
+    const result = await query(sql);
+    const totalResult = await query(countQuery);
+    const totalItems = totalResult[0].total;
+
+    const orders = [];
+    // if (result < totalItems) {
+    for (let index = 0; index < result.length; index++) {
+      let order = result[index];
+      orders.push(order);
+    }
+    // }
+
+    res.status(200).json({
+      total: totalItems,
+      orders: orders,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -45,6 +62,37 @@ router.get("/OrderHistory/:email", async (req, res) => {
     // Optionally, get the total count of products for pagination metadata
     const countQuery = `SELECT COUNT(*) AS total FROM Products`;
     const totalResult = await query(countQuery, [customer_email]);
+    const totalItems = totalResult[0].total;
+
+    res.status(200).json({
+      page,
+      pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / pageSize),
+      history,
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get all orders by User conect
+router.get("/OrderHistory", async (req, res) => {
+
+  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+  const pageSize = 10;
+
+  const offset = (page - 1) * pageSize;
+
+  try {
+    const sql = "SELECT * FROM OrderHistory";
+
+    const history = await query(sql); // Execute the query with LIMIT and OFFSET
+
+    // Optionally, get the total count of products for pagination metadata
+    const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+    const totalResult = await query(countQuery);
     const totalItems = totalResult[0].total;
 
     res.status(200).json({
