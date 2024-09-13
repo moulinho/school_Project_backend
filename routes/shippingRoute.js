@@ -27,7 +27,7 @@ router.get("/", async (req, res) => {
   } catch (error) {
     // Handle any errors
 
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -53,7 +53,7 @@ router.post("/", async (req, res) => {
     ]);
     res.status(201).json({ message: "Shipping record inserted", result });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

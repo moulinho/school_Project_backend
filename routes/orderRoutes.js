@@ -60,7 +60,7 @@ router.get("/OrderHistory/:email", async (req, res) => {
     const history = await query(sql, [customer_email, pageSize, offset]); // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
-    const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+    const countQuery = `SELECT COUNT(*) AS total FROM OrderHistory`;
     const totalResult = await query(countQuery, [customer_email]);
     const totalItems = totalResult[0].total;
 
@@ -77,18 +77,17 @@ router.get("/OrderHistory/:email", async (req, res) => {
   }
 });
 
-// Get all orders by User conect
+// Get all ordersHistory
 router.get("/OrderHistory", async (req, res) => {
-
   const page = parseInt(req.query.page) || 1; // Current page (default is 1)
   const pageSize = 10;
 
   const offset = (page - 1) * pageSize;
 
   try {
-    const sql = "SELECT * FROM OrderHistory";
+    const sql = "SELECT * FROM OrderHistory LIMIT ? OFFSET ?";
 
-    const history = await query(sql); // Execute the query with LIMIT and OFFSET
+    const history = await query(sql, [pageSize, offset]); // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
     const countQuery = `SELECT COUNT(*) AS total FROM Products`;
@@ -108,6 +107,50 @@ router.get("/OrderHistory", async (req, res) => {
   }
 });
 
+// Get all orders Pedding
+router.get("/orderPedding", async (req, res) => {
+  try {
+    // const pageSize = 10;
+    const status = "en attente" || "pending";
+    // Execute the query with LIMIT and OFFSET
+
+    // Optionally, get the total count of products for pagination metadata
+    const countQuery = `SELECT COUNT(*) AS total FROM OrderHistory WHERE status = ? `;
+    const totalResult = await query(countQuery, [status]);
+    const totalItems = totalResult[0].total;
+    // console.log("totalResult", totalResult);
+
+    res.status(200).json({
+      totalItems,
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get all orders shipped
+router.get("/orderShipped", async (req, res) => {
+  try {
+    // const pageSize = 10;
+    const status = "expédié" || "shipped";
+    // Execute the query with LIMIT and OFFSET
+
+    // Optionally, get the total count of products for pagination metadata
+    const countQuery = `SELECT COUNT(*) AS total FROM OrderHistory WHERE status = ? `;
+    const totalResult = await query(countQuery, [status]);
+    const totalItems = totalResult[0].total;
+    console.log("totalResult", totalResult);
+
+    res.status(200).json({
+      totalItems,
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Create a new order
 router.post("/", async (req, res) => {
   // console.log("req", req.body);
@@ -117,7 +160,7 @@ router.post("/", async (req, res) => {
 
   const { customer_id, status, total_price, shipping_address } = req.body;
 
-  console.log("Orders", req.body);
+  // console.log("Orders", req.body);
 
   db.execute(
     query,

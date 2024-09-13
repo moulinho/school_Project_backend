@@ -54,7 +54,7 @@ router.get("/suppliers", (req, res) => {
       res.status(500).json({ error: err.message });
       return;
     }
-    console.log("results", results);
+    // console.log("results", results);
 
     res.json(results);
   });

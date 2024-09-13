@@ -56,7 +56,7 @@ router.post("/paiment-register", async (req, res) => {
     [id, order_id, payment_method, amount, status],
     (err, results) => {
       if (err) {
-        console.error('SQL Error:', err);
+        // console.error('SQL Error:', err);
         return res.status(500).json({ message: "Il y'a une erreur" });
       }
       res.status(201).json({
