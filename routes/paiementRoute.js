@@ -1,10 +1,12 @@
-
 const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 
 const db = require("../database");
 const id = uuidv4();
+
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
@@ -13,7 +15,6 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 router.post("/paiment-intent", async (req, res) => {
   const { total } = req.body;
 
-  // console.log("req.body", req.body);
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total,
@@ -29,11 +30,9 @@ router.post("/paiment-intent", async (req, res) => {
       },
     });
 
-    // res.send({
-    //   clientSecret: paymentIntent.client_secret,
-    //   // [DEV]: For demo purposes only, you should avoid exposing the PaymentIntent ID in the client-side code.
-    //   dpmCheckerLink: `https://dashboard.stripe.com/settings/payment_methods/review?transaction_id=${paymentIntent.id}`,
-    // });
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
   } catch (error) {
     return res.status(400).send({
       error: {
@@ -45,15 +44,25 @@ router.post("/paiment-intent", async (req, res) => {
 });
 
 router.post("/paiment-register", async (req, res) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invlide." });
+  }
+  const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  req.user = decoded;
+  const userId = req.user.id;
+
   const query =
     "INSERT INTO Payments (id, order_id, payment_method, amount, status) VALUES (? ,? ,? ,? ,?)";
 
-    // console.log("req.body",req.body);
-    
+  // console.log("req.body",req.body);
+
   const { order_id, payment_method, amount, status } = req.body;
   db.execute(
     query,
-    [id, order_id, payment_method, amount, status],
+    [id, order_id, payment_method, amount, status, userId],
     (err, results) => {
       if (err) {
         // console.error('SQL Error:', err);

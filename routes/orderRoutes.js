@@ -3,7 +3,8 @@ const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
 const db = require("../database");
 const id = uuidv4();
-const Order = require("../models/Order");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 // Helper function to execute SQL queries
 const query = (sql, params) => {
@@ -19,11 +20,23 @@ const query = (sql, params) => {
 
 // Get all Order
 router.get("/", async (req, res) => {
-  const sql = "SELECT * FROM Orders";
-  const countQuery = `SELECT COUNT(*) AS total FROM Orders`;
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invalide." });
+  }
 
   try {
-    const result = await query(sql);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
+
+    const sql = "SELECT * FROM Orders";
+    const countQuery = `SELECT COUNT(*) AS total FROM Orders`;
+
+    const result = await query(sql, [userId]);
     const totalResult = await query(countQuery);
     const totalItems = totalResult[0].total;
 
@@ -46,18 +59,35 @@ router.get("/", async (req, res) => {
 
 // Get all orders by User conect
 router.get("/OrderHistory/:email", async (req, res) => {
-  const customer_email = req.params.email;
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
-  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
-  const pageSize = 10;
-
-  const offset = (page - 1) * pageSize;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invalide." });
+  }
 
   try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
+
+    const customer_email = req.params.email;
+
+    const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+    const pageSize = 10;
+
+    const offset = (page - 1) * pageSize;
+
     const sql =
       "SELECT * FROM OrderHistory WHERE customer_email = ? LIMIT ? OFFSET ?";
 
-    const history = await query(sql, [customer_email, pageSize, offset]); // Execute the query with LIMIT and OFFSET
+    const history = await query(sql, [
+      customer_email,
+      pageSize,
+      offset,
+      userId,
+    ]); // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
     const countQuery = `SELECT COUNT(*) AS total FROM OrderHistory`;
@@ -79,15 +109,26 @@ router.get("/OrderHistory/:email", async (req, res) => {
 
 // Get all ordersHistory
 router.get("/OrderHistory", async (req, res) => {
-  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
-  const pageSize = 10;
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
-  const offset = (page - 1) * pageSize;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invalide." });
+  }
 
   try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
+
+    const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+    const pageSize = 10;
+
+    const offset = (page - 1) * pageSize;
     const sql = "SELECT * FROM OrderHistory LIMIT ? OFFSET ?";
 
-    const history = await query(sql, [pageSize, offset]); // Execute the query with LIMIT and OFFSET
+    const history = await query(sql, [pageSize, offset, userId]); // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
     const countQuery = `SELECT COUNT(*) AS total FROM Products`;
@@ -149,7 +190,6 @@ router.get("/orderShipped", async (req, res) => {
   }
 });
 
-
 // Get all orders refuse
 router.get("/orderRefuse", async (req, res) => {
   try {
@@ -172,8 +212,17 @@ router.get("/orderRefuse", async (req, res) => {
 
 // Update status orders
 router.put("/orderStatus", async (req, res) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invalide." });
+  }
   try {
-    // console.log("req.body", req.body);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
 
     const { order_id, status } = req.body;
     // const pageSize = 10;
@@ -181,7 +230,7 @@ router.put("/orderStatus", async (req, res) => {
 
     // Optionally, get the total count of products for pagination metadata
     const sql = `UPDATE Orders SET status = ? WHERE id = ?`;
-    const result = await query(sql, [status, order_id]);
+    const result = await query(sql, [status, order_id, userId]);
     // const totalItems = totalResult[0].total;
     // console.log("result", result);
     if (result.affectedRows > 0) {
