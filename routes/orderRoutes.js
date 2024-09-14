@@ -115,7 +115,7 @@ router.get("/orderPedding", async (req, res) => {
     // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
-    const countQuery = `SELECT COUNT(*) AS total FROM OrderHistory WHERE status = 'en attente' OR status = 'pending' `;
+    const countQuery = `SELECT COUNT(*) AS total FROM Orders WHERE status = 'en attente' OR status = 'pending' `;
     const totalResult = await query(countQuery);
     const totalItems = totalResult[0].total;
     // console.log("totalResult", totalResult);
@@ -136,7 +136,28 @@ router.get("/orderShipped", async (req, res) => {
     // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
-    const countQuery = `SELECT COUNT(*) AS total FROM OrderHistory WHERE status = 'expédié' OR status = 'shipped' `;
+    const countQuery = `SELECT COUNT(*) AS total FROM Orders WHERE status = 'expédié' OR status = 'shipped' `;
+    const totalResult = await query(countQuery);
+    const totalItems = totalResult[0].total;
+
+    res.status(200).json({
+      totalItems,
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+// Get all orders refuse
+router.get("/orderRefuse", async (req, res) => {
+  try {
+    // const pageSize = 10;
+    // Execute the query with LIMIT and OFFSET
+
+    // Optionally, get the total count of products for pagination metadata
+    const countQuery = `SELECT COUNT(*) AS total FROM Orders WHERE status = 'Réfusé'`;
     const totalResult = await query(countQuery);
     const totalItems = totalResult[0].total;
 
@@ -149,10 +170,10 @@ router.get("/orderShipped", async (req, res) => {
   }
 });
 
-// Get all orders shipped
+// Update status orders
 router.put("/orderStatus", async (req, res) => {
   try {
-    console.log("req.body", req.body);
+    // console.log("req.body", req.body);
 
     const { order_id, status } = req.body;
     // const pageSize = 10;
