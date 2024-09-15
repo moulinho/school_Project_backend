@@ -8,6 +8,7 @@ const db = require("../database");
 require("dotenv").config();
 
 const router = express.Router();
+let tokens = "";
 
 // Register a new user
 router.post("/register", async (req, res) => {
@@ -104,9 +105,6 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ error: err.message });
         return;
       }
-      // console.log("results", results  );
-
-      // res.json(results);
 
       // Generate JWT token
       const token = jwt.sign(
@@ -118,11 +116,9 @@ router.post("/login", async (req, res) => {
       );
 
       const validPassword = await bcrypt.compare(password, results[0].password);
-      // console.log("password", password);
-      // console.log("validPassword", validPassword);
 
       if (!validPassword) {
-        return res.status(400).json({ message: "Invalid credentials" });
+        return res.status(400).json({ message: "Information invalide" });
       }
 
       res.status(200).json({
@@ -133,7 +129,6 @@ router.post("/login", async (req, res) => {
         }),
       });
     });
-    // console.log("user===>", user);
   } catch (err) {
     console.error("SQL Error:", err);
     res.status(500).json({ message: "Database error", error: err });
@@ -264,12 +259,10 @@ router.post("/email_init", async (req, res) => {
     if (err) {
       res.status(500).json({ message: "Erreur", error: err });
     }
-
+    tokens = results;
     if (results.length === 0) {
       res.status(201).json({ message: "Email non existant" });
     } else {
-      // console.log("res==s", results);
-
       let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 587,
@@ -279,7 +272,6 @@ router.post("/email_init", async (req, res) => {
           pass: process.env.APP_EMAIL_PASS, // generated ethereal password
         },
       });
-      // console.log("transporter", transporter);
       // send mail with defined transport object
       let info = await transporter.sendMail({
         from: process.env.EMAIL_FROM, // sender address
@@ -288,11 +280,27 @@ router.post("/email_init", async (req, res) => {
         text: "réinitialisé de mot de passe", // plain text body
         html: `<b>Salut ${results[0].first_name} ${results[0].last_name}</b>
               veuillez cliqué sur ce lien pour la réiniréinitialisation de votre  mot de passe:
-              <a href="${process.env.PASSWORD_RESET_URL_ALLOW_LIST}?"> réinitialisé  mon mot de passe </a> `, // html body
+              <a href="${process.env.PASSWORD_RESET_URL_ALLOW_LIST}?reset=${results[0].password}&fct=${results[0].id}"> réinitialisé  mon mot de passe </a> `, // html body
       });
       transporter.close();
       res.status(200).json({ message: "Email envoyé avec success" });
     }
+  });
+});
+
+router.post("/rest_password", async (req, res) => {
+  const { password, id } = req.body;
+  // Generate JWT token
+  const token = jwt.sign({ id: id }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const sql = `UPDATE Customers SET password = ? WHERE id = ?`;
+  db.query(sql, [hashedPassword, id, token], async (err, results) => {
+    if (err) {
+      res.status(500).json({ message: "Erreur", error: err });
+    }
+    res.status(200).json({ message: "Votre mot a été modifié avec success" });
   });
 });
 
