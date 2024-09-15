@@ -1,5 +1,6 @@
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
+const nodemailer = require("nodemailer");
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -253,6 +254,47 @@ router.patch("/profile_update", async (req, res) => {
     console.error("SQL Error:", err);
     res.status(500).json({ message: "Database error", error: err });
   }
+});
+
+router.post("/email_init", async (req, res) => {
+  const { email } = req.body;
+  console.log("req.body", req.body);
+
+  const sql = "SELECT * FROM Customers WHERE email = ?";
+  db.query(sql, [email], async (err, results) => {
+    if (err) {
+      res.status(500).json({ message: "Erreur", error: err });
+    }
+
+    if (results.length === 0) {
+      res.status(200).json({ message: "Email non existant" });
+    } else {
+      // console.log("res==s", results);
+
+      let transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.APP_EMAIL_USER, // generated ethereal user
+          pass: process.env.APP_EMAIL_PASS, // generated ethereal password
+        },
+      });
+      // console.log("transporter", transporter);
+      // send mail with defined transport object
+      let info = await transporter.sendMail({
+        from: process.env.EMAIL_FROM, // sender address
+        to: `${results[0].email}`, // list of receivers
+        subject: "Demande de réinitialisation de mot de passe✔", // Subject line
+        text: "réinitialisé de mot de passe", // plain text body
+        html: `<b>Salut ${results[0].first_name} ${results[0].last_name}</b>
+                      veuillez cliqué sur ce lien pour la réiniréinitialisation de votre  mot de passe:
+                   <a href="${process.env.PASSWORD_RESET_URL_ALLOW_LIST}"> réinitialisé  mon mot de passe </a> `, // html body
+      });
+      transporter.close();
+      res.status(200).json(results);
+    }
+  });
 });
 
 module.exports = router;
