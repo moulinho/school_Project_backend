@@ -244,43 +244,11 @@ router.put("/orderStatus", async (req, res) => {
   }
 });
 
-// Create a new order
-router.post("/", async (req, res) => {
-  // console.log("req", req.body);
-
-  const query =
-    "INSERT INTO Orders (id, customer_id, status, total_price, shipping_address) VALUES (? ,? ,? ,? ,?)";
-
-  const { customer_id, status, total_price, shipping_address } = req.body;
-
-  // console.log("Orders", req.body);
-
-  db.execute(
-    query,
-    [id, customer_id, status, total_price, shipping_address],
-    (err, results) => {
-      if (err) {
-        // console.error('SQL Error:', err);
-        if (err.sqlMessage.includes("Duplicate")) {
-          return res
-            .status(500)
-            .json({ message: "La commande est déjà effectué" });
-        }
-      }
-      res.status(201).json({
-        message: "Oder created",
-        id: id,
-      });
-    }
-  );
-});
-
 router.post("/orderItems", async (req, res) => {
-  const items = req.body;
-  // console.log("items", items);
+  const { cartItems, order_id } = req.body;
 
   // Validate request body
-  if (items.length === 0) {
+  if (cartItems?.length === 0 || cartItems?.length === undefined) {
     return res
       .status(400)
       .json({ error: "Request body must be a non-empty array" });
@@ -289,10 +257,12 @@ router.post("/orderItems", async (req, res) => {
   const queryOrderItems =
     " INSERT INTO OrderItems (id, order_id, product_id, quantity, price_per_unit)  VALUES ?";
 
-  const values = items.map((item) => {
-    const idOrderItem = uuidv4();
+  const values = cartItems.map((item) => {
+    if (item && order_id) {
+      const idOrderItem = uuidv4();
 
-    return [idOrderItem, id, item.id, item.quantity, item.price];
+      return [idOrderItem, order_id, item.id, item.quantity, item.price];
+    }
   });
   // console.log("values", values);
 
@@ -306,9 +276,39 @@ router.post("/orderItems", async (req, res) => {
     if (!res.headersSent) {
       // Ensure headers are not already sent
       // console.error(error);
-      res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ error });
     }
   }
+});
+
+// Create a new order
+router.post("/", async (req, res) => {
+  // console.log("req", req.body);
+  const ids = uuidv4();
+
+  const query =
+    "INSERT INTO Orders (id, customer_id,total_price, status,  shipping_address) VALUES (? ,? ,? ,? ,?)";
+
+  const { customer_id, total_price, status, shipping_address } = req.body;
+
+  db.execute(
+    query,
+    [ids, customer_id, total_price, status, shipping_address],
+    (err, results) => {
+      if (err) {
+        console.error("SQL Error:", err);
+        if (err.sqlMessage.includes("Duplicate")) {
+          return res
+            .status(500)
+            .json({ message: "La commande est déjà effectué" });
+        }
+      }
+      res.status(201).json({
+        message: "Oder created",
+        id: ids,
+      });
+    }
+  );
 });
 
 module.exports = router;

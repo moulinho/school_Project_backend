@@ -17,7 +17,7 @@ const query = (sql, params) => {
 // Get all users
 router.get("/", async (req, res) => {
   // const sql = "SELECT * FROM Customers";
-  const countQuery = `SELECT COUNT(*) AS total FROM Customers`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Customers WHERE role = 'customer'`;
 
   try {
     // const result = await query(sql);

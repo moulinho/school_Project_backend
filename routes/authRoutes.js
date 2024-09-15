@@ -88,8 +88,6 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  // console.log("email, password", email, password);
-
   if (!email || !password) {
     return res
       .status(400)
@@ -290,10 +288,12 @@ router.post("/email_init", async (req, res) => {
 
 router.post("/rest_password", async (req, res) => {
   const { password, id } = req.body;
+  
   // Generate JWT token
   const token = jwt.sign({ id: id }, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const sql = `UPDATE Customers SET password = ? WHERE id = ?`;
   db.query(sql, [hashedPassword, id, token], async (err, results) => {
