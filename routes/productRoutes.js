@@ -1,8 +1,8 @@
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
-
 const router = express.Router();
 const db = require("../database");
+const jwt = require("jsonwebtoken");
 
 // Helper function to execute SQL queries
 const query = (sql, params) => {
@@ -63,27 +63,41 @@ router.get("/suppliers", (req, res) => {
 // post Supplier
 router.post("/suppliers", async (req, res) => {
   const id = uuidv4();
+
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
-  const { name, contact_person, phone, email, address, city, country } =
-    req.body;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invalide." });
+  }
 
-  const sql =
-    "INSERT INTO Suppliers (id, name, contact_person, phone, email, address, city, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
 
-  const supplier = await query(sql, [
-    id,
-    name,
-    contact_person,
-    phone,
-    email,
-    address,
-    city,
-    country,
-    token,
-  ]); // Execute the query with LIMIT and OFFSET
+    const { name, contact_person, phone, email, address, city, country } =
+      req.body;
 
-  console.log("supplier", supplier);
+    const sql =
+      "INSERT INTO Suppliers (id, name, contact_person, phone, email, address, city, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    const supplier = await query(sql, [
+      id,
+      name,
+      contact_person,
+      phone,
+      email,
+      address,
+      city,
+      country,
+      userId,
+    ]);
+    res.status(200).json(supplier);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // Get products categories
