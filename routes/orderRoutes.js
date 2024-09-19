@@ -131,7 +131,7 @@ router.get("/OrderHistory", async (req, res) => {
     const history = await query(sql, [pageSize, offset, userId]); // Execute the query with LIMIT and OFFSET
 
     // Optionally, get the total count of products for pagination metadata
-    const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+    const countQuery = `SELECT COUNT(*) AS total FROM Orders`;
     const totalResult = await query(countQuery);
     const totalItems = totalResult[0].total;
 

@@ -25,7 +25,7 @@ router.get("/", async (req, res) => {
   const offset = (page - 1) * pageSize;
 
   const sql = "SELECT * FROM Products LIMIT 12 OFFSET ?";
- 
+
   const products = await query(sql, [offset]); // Execute the query with LIMIT and OFFSET
   // console.log("products", products);
 
@@ -58,6 +58,32 @@ router.get("/suppliers", (req, res) => {
 
     res.json(results);
   });
+});
+
+// post Supplier
+router.post("/suppliers", async (req, res) => {
+  const id = uuidv4();
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  const { name, contact_person, phone, email, address, city, country } =
+    req.body;
+
+  const sql =
+    "INSERT INTO Suppliers (id, name, contact_person, phone, email, address, city, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+  const supplier = await query(sql, [
+    id,
+    name,
+    contact_person,
+    phone,
+    email,
+    address,
+    city,
+    country,
+    token,
+  ]); // Execute the query with LIMIT and OFFSET
+
+  console.log("supplier", supplier);
 });
 
 // Get products categories
