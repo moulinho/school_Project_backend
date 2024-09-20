@@ -34,7 +34,7 @@ router.post("/register", async (req, res) => {
           res.status(500).send(err);
         } else {
           if (results.length > 0) {
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(400).json({ message: "Ce compte existe déjà" });
           }
         }
       }
@@ -288,7 +288,7 @@ router.post("/email_init", async (req, res) => {
 
 router.post("/rest_password", async (req, res) => {
   const { password, id } = req.body;
-  
+
   // Generate JWT token
   const token = jwt.sign({ id: id }, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
