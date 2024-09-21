@@ -88,7 +88,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  if (!email) {
     return res
       .status(400)
       .json({ message: "email ou mot de passe incorrect " });
@@ -104,28 +104,44 @@ router.post("/login", async (req, res) => {
         return;
       }
 
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: results[0].id },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+      if (results.length) {
+        // Generate JWT token
+        const token = jwt.sign(
+          { id: results[0].id },
+          process.env.ACCESS_TOKEN_SECRET,
+          {
+            expiresIn: process.env.JWT_EXPIRES_IN,
+          }
+        );
+
+        if (!password) {
+          res.status(200).json({
+            token: token,
+            user: results.filter((item) => {
+              delete item.password;
+              return item;
+            }),
+          });
+        } else {
+          const validPassword = await bcrypt.compare(
+            password,
+            results[0].password
+          );
+
+          if (!validPassword) {
+            return res.status(400).json({ message: "Information invalide" });
+          }
+
+          res.status(200).json({
+            token: token,
+            user: results.filter((item) => {
+              delete item.password;
+              return item;
+            }),
+          });
         }
-      );
-
-      const validPassword = await bcrypt.compare(password, results[0].password);
-
-      if (!validPassword) {
-        return res.status(400).json({ message: "Information invalide" });
-      }
-
-      res.status(200).json({
-        token: token,
-        user: results.filter((item) => {
-          delete item.password;
-          return item;
-        }),
-      });
+      } else
+        return res.status(404).json({ message: "Cet utilisateur n'exist pas" });
     });
   } catch (err) {
     console.error("SQL Error:", err);

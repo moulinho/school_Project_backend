@@ -16,6 +16,24 @@ const query = (sql, params) => {
   });
 };
 
+// Get all Supplier
+router.get("/suppliers", async (req, res) => {
+  const sql = "SELECT * FROM Suppliers";
+  try {
+    const suppliers = await query(sql);
+    const countQuery = `SELECT COUNT(*) AS total FROM Suppliers`;
+    // console.log("countQuery", countQuery);
+
+    const totalResult = await query(countQuery);
+    const total = totalResult[0].total;
+    res.status(200).json({
+      total,
+      suppliers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "server error" });
+  }
+});
 // Get all products
 router.get("/", async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Current page (default is 1)
@@ -44,75 +62,7 @@ router.get("/", async (req, res) => {
     products,
   });
 });
-
-// Get all Supplier
-router.get("/suppliers", async (req, res) => {
-  const sql = "SELECT * FROM Suppliers";
-  try {
-    const suppliers = await query(sql);
-    const countQuery = `SELECT COUNT(*) AS total FROM Suppliers`;
-    // console.log("countQuery", countQuery);
-
-    const totalResult = await query(countQuery);
-    const total = totalResult[0].total;
-    res.status(200).json({
-      total,
-      suppliers,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "server error" });
-  }
-});
-
-// post Supplier
-router.post("/suppliers", async (req, res) => {
-  const { name, contact_person, phone, email, address, city, country } =
-    req.body;
-
-  const id = uuidv4();
-
-  const token = req.header("Authorization")?.replace("Bearer ", "");
-
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Acces refusé identifiant invalide." });
-  }
-
-  try {
-    const sqlExistence = "SELECT * FROM Suppliers WHERE email = ?";
-
-    const supplierExistance = await query(sqlExistence, [email]);
-
-    if (supplierExistance.length > 0) {
-      return res.status(400).json({ message: "Ce compte existe déjà" });
-    }
-
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    req.user = decoded;
-    const userId = req.user.id;
-
-    const sql =
-      "INSERT INTO Suppliers (id, name, contact_person, phone, email, address, city, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-    const supplier = await query(sql, [
-      id,
-      name,
-      contact_person,
-      phone,
-      email,
-      address,
-      city,
-      country,
-      userId,
-    ]);
-
-    res.status(200).json(supplier);
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
+ 
 // Get products categories
 router.get("/categories", (req, res) => {
   const query = "SELECT * FROM Categories";
@@ -273,5 +223,57 @@ router.post("/", (req, res) => {
     }
   );
 });
+
+
+
+// post Supplier
+router.post("/suppliers", async (req, res) => {
+  const { name, contact_person, phone, email, address, city, country } =
+    req.body;
+
+  const id = uuidv4();
+
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Acces refusé identifiant invalide." });
+  }
+
+  try {
+    const sqlExistence = "SELECT * FROM Suppliers WHERE email = ?";
+
+    const supplierExistance = await query(sqlExistence, [email]);
+
+    if (supplierExistance.length > 0) {
+      return res.status(400).json({ message: "Ce compte existe déjà" });
+    }
+
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decoded;
+    const userId = req.user.id;
+
+    const sql =
+      "INSERT INTO Suppliers (id, name, contact_person, phone, email, address, city, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    const supplier = await query(sql, [
+      id,
+      name,
+      contact_person,
+      phone,
+      email,
+      address,
+      city,
+      country,
+      userId,
+    ]);
+
+    res.status(200).json(supplier);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 module.exports = router;
