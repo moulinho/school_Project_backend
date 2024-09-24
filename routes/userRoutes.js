@@ -26,10 +26,10 @@ router.get("/", async (req, res) => {
 
     // const processedCustomers = [];
     // if (result < totalItems) {
-      // for (let index = 0; index < result.length; index++) {
-      //   let customer = result[index];
-      //   processedCustomers.push(customer);
-      // }
+    // for (let index = 0; index < result.length; index++) {
+    //   let customer = result[index];
+    //   processedCustomers.push(customer);
+    // }
     // }
 
     res.status(200).json({
@@ -38,17 +38,6 @@ router.get("/", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
-  }
-});
-
-// Create a new user
-router.post("/", async (req, res) => {
-  const user = new User(req.body);
-  try {
-    const newUser = await user.save();
-    res.status(201).json(newUser);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
   }
 });
 
