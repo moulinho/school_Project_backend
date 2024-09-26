@@ -36,41 +36,35 @@ router.get("/suppliers", async (req, res) => {
 });
 // Get all products
 router.get("/", async (req, res) => {
-  const page = parseInt(req.query.page) || 1; // Current page (default is 1)
-  const pageSize = 12;
-
-  // Calculate the offset
-  const offset = (page - 1) * pageSize;
-  const sql = "SELECT * FROM Products LIMIT 12 OFFSET ?";
-  const countQuery = `SELECT COUNT(*) AS total FROM Products`;
-
   try {
+    const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+    const pageSize = 12;
+
+    // Calculate the offset
+    const offset = (page - 1) * pageSize;
+    const sql = "SELECT * FROM Products LIMIT 12 OFFSET ?";
+    const countQuery = `SELECT COUNT(*) AS total FROM Products`;
+
     const products = await query(sql, [offset]); // Execute the query with LIMIT and OFFSET
     const totalResult = await query(countQuery);
+    // Optionally, get the total count of products for pagination metadata
+    // console.log("countQuery", countQuery);
 
-    
+    const totalItems = totalResult[0].total;
+    res.status(200).json({
+      page,
+      pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / pageSize),
+      products,
+    });
   } catch (error) {
-    console.log('error',error);
-    
+    console.log("error", error);
   }
 
   // console.log("products", products);
-
-  // Optionally, get the total count of products for pagination metadata
-  // console.log("countQuery", countQuery);
-
-  // const totalItems = totalResult[0].total;
-
-  res.status(200).json({
-    product:"hello"
-    // page,
-    // pageSize,
-    // totalItems,
-    // totalPages: Math.ceil(totalItems / pageSize),
-    // products,
-  });
 });
- 
+
 // Get products categories
 router.get("/categories", (req, res) => {
   const query = "SELECT * FROM Categories";
@@ -232,8 +226,6 @@ router.post("/", (req, res) => {
   );
 });
 
-
-
 // post Supplier
 router.post("/suppliers", async (req, res) => {
   const { name, contact_person, phone, email, address, city, country } =
@@ -282,6 +274,5 @@ router.post("/suppliers", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 module.exports = router;
