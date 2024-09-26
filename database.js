@@ -7,8 +7,22 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectTimeout: 10000,  // Increase timeout in milliseconds
+  pool: true,
+  queueLimit: 0,
   port: 3306,
 });
+
+// const db =  mysql.createPool({
+//   host: process.env.DB_HOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME,
+//   waitForConnections: true,
+//   connectionLimit: 10,
+//   queueLimit: 0
+// });
 
 // Connect to the database
 function connect() {
@@ -23,9 +37,9 @@ function connect() {
 }
 
 // Keep the connection alive
-db.on('error', (err) => {
+db.on("error", (err) => {
   console.error("Database error:", err);
-  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+  if (err.code === "PROTOCOL_CONNECTION_LOST") {
     connect(); // Reconnect on lost connection
   }
 });
