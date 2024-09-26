@@ -41,18 +41,25 @@ router.get("/", async (req, res) => {
 
   // Calculate the offset
   const offset = (page - 1) * pageSize;
-
   const sql = "SELECT * FROM Products LIMIT 12 OFFSET ?";
+  const countQuery = `SELECT COUNT(*) AS total FROM Products`;
 
-  const products = await query(sql, [offset]); // Execute the query with LIMIT and OFFSET
+  try {
+    const products = await query(sql, [offset]); // Execute the query with LIMIT and OFFSET
+    const totalResult = await query(countQuery);
+
+    
+  } catch (error) {
+    console.log('error',error);
+    
+  }
+
   // console.log("products", products);
 
   // Optionally, get the total count of products for pagination metadata
-  const countQuery = `SELECT COUNT(*) AS total FROM Products`;
   // console.log("countQuery", countQuery);
 
-  const totalResult = await query(countQuery);
-  const totalItems = totalResult[0].total;
+  // const totalItems = totalResult[0].total;
 
   res.status(200).json({
     product:"hello"
