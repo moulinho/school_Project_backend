@@ -55,11 +55,12 @@ router.get("/", async (req, res) => {
   const totalItems = totalResult[0].total;
 
   res.status(200).json({
-    page,
-    pageSize,
-    totalItems,
-    totalPages: Math.ceil(totalItems / pageSize),
-    products,
+    product:"hello"
+    // page,
+    // pageSize,
+    // totalItems,
+    // totalPages: Math.ceil(totalItems / pageSize),
+    // products,
   });
 });
  
