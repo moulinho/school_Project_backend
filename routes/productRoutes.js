@@ -18,17 +18,27 @@ const query = (sql, params) => {
 
 // Get all Supplier
 router.get("/suppliers", async (req, res) => {
-  const sql = "SELECT * FROM Suppliers";
   try {
-    const suppliers = await query(sql);
+    const page = parseInt(req.query.page) || 1; // Current page (default is 1)
+    const pageSize = 12;
+
+    // Calculate the offset
+    const offset = (page - 1) * pageSize;
+
+    const sql = "SELECT * FROM Suppliers";
+    const suppliers = await query(sql, [offset]);
     const countQuery = `SELECT COUNT(*) AS total FROM Suppliers`;
     // console.log("countQuery", countQuery);
 
     const totalResult = await query(countQuery);
     const total = totalResult[0].total;
     res.status(200).json({
+      page,
+      pageSize,
       total,
+      totalPages: Math.ceil(total / pageSize),
       suppliers,
+
     });
   } catch (error) {
     res.status(500).json({ error: "server error" });
